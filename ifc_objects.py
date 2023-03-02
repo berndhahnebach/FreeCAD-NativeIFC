@@ -144,4 +144,3 @@ class ifc_object:
                 child = [o for o in obj.OutListRecursive if getattr(o,"StepId",None) == old_id]
                 if len(child) == 1:
                     child[0].StepId = new_id
-
