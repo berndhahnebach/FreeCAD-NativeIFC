@@ -54,8 +54,10 @@ def insert(filename, docname, strategy=None, shapemode=None, switchwb=None, sile
         return
     stime = time.time()
     document = FreeCAD.getDocument(docname)
+    print("Start: recomputing the document.")
     prj_obj = ifc_tools.create_document(document, filename, shapemode, strategy)
     document.recompute()
+    print("End: recomputing the document.")
     if FreeCAD.GuiUp:
         FreeCADGui.doCommand("ifcfile = FreeCAD.ActiveDocument.{}.Proxy.ifcfile #warning: make sure you know what you are doing when using this!".format(prj_obj.Name))
     endtime = "%02d:%02d" % (divmod(round(time.time() - stime, 1), 60))

@@ -20,6 +20,7 @@
 #*                                                                         *
 #***************************************************************************
 
+import importlib
 import multiprocessing
 import os
 
@@ -38,6 +39,10 @@ from ifcopenshell.util import schema
 
 import ifc_objects
 import ifc_viewproviders
+# since we are in early dev days steady reloading helps a lot
+importlib.reload(ifc_objects)
+importlib.reload(ifc_viewproviders)
+
 
 SCALE = 1000.0 # IfcOpenShell works in meters, FreeCAD works in mm
 
@@ -67,6 +72,8 @@ def create_document(document, filename=None, shapemode=0, strategy=0):
         ifcfile = create_ifcfile()
     project = ifcfile.by_type("IfcProject")[0]
     obj.Proxy.ifcfile = ifcfile
+    print("Start: creating FreeCAD IfcObjects. Pref strategy: {}".format(strategy))
+    print("  #{}: {}, '{}'".format(project.id(), project.is_a(), project.Name))
     add_properties(obj, ifcfile, project, shapemode=shapemode)
     obj.addProperty("App::PropertyEnumeration", "Schema", "Base")
     obj.Schema = ifcopenshell.ifcopenshell_wrapper.schema_names()
@@ -78,6 +85,7 @@ def create_document(document, filename=None, shapemode=0, strategy=0):
         create_children(obj, ifcfile, recursive=True, only_structure=True)
     elif strategy == 2:
         create_children(obj, ifcfile, recursive=True, assemblies=False)
+    print("End: creating FreeCAD creating FreeCAD IfcObjects.")
     return obj
 
 
@@ -382,6 +390,7 @@ def filter_elements(elements, ifcfile, expand=True):
 
     """Filter elements list of unwanted types"""
 
+    # print(elements)
     # gather decomposition if needed
     if expand and (len(elements) == 1):
         elem = elements[0]
@@ -403,6 +412,7 @@ def filter_elements(elements, ifcfile, expand=True):
                     # the Polyline is the wall axis
                     # see https://github.com/yorikvanhavre/FreeCAD-NativeIFC/issues/28
                     elements = ifcopenshell.util.element.get_decomposition(elem)
+    # print(elements)
     # Never load feature elements, they can be lazy loaded
     elements = [e for e in elements if not e.is_a("IfcFeatureElement")]
     # do not load spaces for now (TODO handle them correctly)
@@ -413,6 +423,8 @@ def filter_elements(elements, ifcfile, expand=True):
     elements = [e for e in elements if not e.is_a("IfcFurnishingElement")]
     # skip annotations for now
     elements = [e for e in elements if not e.is_a("IfcAnnotation")]
+    # print(elements)
+
     return elements
 
 
@@ -486,7 +498,7 @@ def get_shape(elements, ifcfile, cached=False):
             shape.transformShape(mat)
             shapes.append(shape)
             color = item.geometry.surface_styles
-            #color = (color[0], color[1], color[2], 1.0 - color[3])
+            # color = (color[0], color[1], color[2], 1.0 - color[3])
             # TODO temp workaround for tranparency bug
             color = (color[0], color[1], color[2], 0.0)
             for f in shape.Faces:
@@ -509,6 +521,7 @@ def get_coin(elements, ifcfile, cached=False):
 
     """Returns a Coin node from a list of IFC entities"""
 
+    # elements could be just one element too, filter_elements will make a list
     elements = filter_elements(elements, ifcfile)
     nodes = coin.SoSeparator()
     # process cached elements
@@ -525,8 +538,8 @@ def get_coin(elements, ifcfile, cached=False):
     if not elements:
         return nodes, None
     if nodes.getNumChildren():
-        print("DEBUG: The following elements are excluded because they make coin crash (need to investigate):")
-        print("DEBUG: If you wish to test, comment out line 488 (return nodes, None) in ifc_tools.py")
+        print("  DEBUG: The following elements are excluded because they make coin crash (need to investigate):")
+        print("  DEBUG: If you wish to test, comment out line 488 (return nodes, None) in ifc_tools.py")
         [print("   ", e) for e in elements]
         return nodes, None
     progressbar = Base.ProgressIndicator()
@@ -587,8 +600,9 @@ def get_settings(ifcfile, brep=True):
     return settings
 
 
-def get_geom_iterator(ifcfile, elements, brep):
+def get_geom_iterator(ifcfile, elements, brep=True):
 
+    # print("  {}".format(elements))
     settings = get_settings(ifcfile, brep)
     cores = multiprocessing.cpu_count()
     iterator = ifcopenshell.geom.iterator(settings, ifcfile, cores, include=elements)
@@ -634,6 +648,7 @@ def set_geometry(obj, elem, ifcfile, cached=False):
                     .format(obj.StepId, obj.IfcType, obj.Label)
                 )
         else:
+            # print("{}, len Vert: {}, Volume: {}".format(shape.ShapeType, len(shape.Vertexes), round(shape.Volume,0)))
             placement = shape.Placement
             obj.Shape = shape
             obj.Placement = placement

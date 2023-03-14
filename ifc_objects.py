@@ -96,6 +96,7 @@ class ifc_object:
 
         import ifc_tools # lazy import
 
+        # print("execute FC-IfcObject: #{}, {}, {}".format(obj.StepId, obj.IfcType, obj.Label))
         cached = getattr(self,"cached",False)
         ifcfile = ifc_tools.get_ifcfile(obj)
         element = ifc_tools.get_ifc_element(obj)
