@@ -20,18 +20,18 @@
 #*                                                                         *
 #***************************************************************************
 
-import os
 import multiprocessing
+import os
 
 import FreeCAD
 from FreeCAD import Base
-import Part
 import Mesh
+import Part
 from pivy import coin
 
 import ifcopenshell
-from ifcopenshell import geom
 from ifcopenshell import api
+from ifcopenshell import geom
 from ifcopenshell import template
 from ifcopenshell.util import attribute
 from ifcopenshell.util import schema
