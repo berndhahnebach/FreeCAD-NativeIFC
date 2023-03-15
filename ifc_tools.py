@@ -864,14 +864,8 @@ def get_elem_attribs(ifcentity):
     }
 
     # get attrib keys
-    attribs = []
-    for anumber in range(20):
-        try:
-            attr = ifcentity.attribute_name(anumber)
-        except Exception:
-            break
-        # print(attr)
-        attribs.append(attr)
+    attribs = [a.name() for a in ifcentity.wrapped_data.declaration().as_entity().all_attributes()]
+    # print(attribs)
 
     # get attrib values
     for attr in attribs:
